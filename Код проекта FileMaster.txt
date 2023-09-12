@@ -1,0 +1,248 @@
+Дата сборки - 12 сентября 14:07
+
+
+.\src\ControlSum.java
+------------------------------
+/*
+ * Задание 3
+ * поиск контрольной суммы файла
+ */
+
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.zip.Adler32;
+
+public class ControlSum {
+    public static void main(String[] args) {
+        try (FileInputStream fis = new FileInputStream("src\\\\test.txt")) {
+            byte[] buffer = new byte[1024];
+            int length;
+            Adler32 adler32 = new Adler32();
+            while ((length = fis.read(buffer)) > 0) {
+                ByteBuffer bb = ByteBuffer.wrap(buffer, 0, length);
+                adler32.update(bb);
+            }
+            long checksum = adler32.getValue();
+            System.out.println("Adler-32 checksum: " + checksum);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+
+------------------------------
+
+.\src\CopyFileExample1.java
+------------------------------
+/*
+ * Задание 2.1
+ * копирование файла с помощью java.io FileInputStream / FileOutputStream
+ */
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
+public class CopyFileExample1 {
+    public static void main(String[] args) {
+        long startTime = System.currentTimeMillis();
+
+        try (FileInputStream fis = new FileInputStream("media/Test.wav");
+             FileOutputStream fos = new FileOutputStream("media/TestCopy1.wav")) {
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = fis.read(buffer)) > 0) {
+                fos.write(buffer, 0, length);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.println("Файл скопирован"); 
+        long endTime = System.currentTimeMillis();
+        System.out.println("Время затрачено: " + (endTime - startTime) + " milliseconds"); 
+    }
+}
+
+
+------------------------------
+
+.\src\CopyFileExample2.java
+------------------------------
+/*
+ * Задание 2.2
+ * копирование файла с помощью FileChannel
+ */
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.channels.FileChannel;
+
+public class CopyFileExample2 {
+    public static void main(String[] args) {
+
+        long startTime = System.currentTimeMillis();
+
+        try (FileInputStream fis = new FileInputStream("media/Test.wav");
+             FileOutputStream fos = new FileOutputStream("media/TestCopy2.wav")) {
+            FileChannel sourceChannel = fis.getChannel();
+            FileChannel destChannel = fos.getChannel();
+            destChannel.transferFrom(sourceChannel, 0, sourceChannel.size());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.println("Файл скопирован"); 
+        long endTime = System.currentTimeMillis();
+        System.out.println("Время затрачено: " + (endTime - startTime) + " milliseconds"); 
+    }
+}
+
+------------------------------
+
+.\src\CopyFileExample3.java
+------------------------------
+/*
+ * Задание 2.3
+ * копирование файла с помощью apache.commons.io.FileUtils
+ */
+
+import org.apache.commons.io.FileUtils;
+
+import java.io.File;
+import java.io.IOException;
+
+public class CopyFileExample3 {
+    public static void main(String[] args) throws IOException {
+        long startTime = System.currentTimeMillis();
+        File source = new File("media/Test.wav");
+        File dest = new File("media/TestCopy3.wav");
+
+        FileUtils.copyFile(source, dest);
+        System.out.println("Файл скопирован"); 
+        long endTime = System.currentTimeMillis();
+        System.out.println("Время затрачено: " + (endTime - startTime) + " milliseconds");       
+    }
+}
+
+
+
+------------------------------
+
+.\src\CopyFileExample4.java
+------------------------------
+/*
+ * Задание 2.4
+ * копирование файла с помощью file.class
+ */
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+public class CopyFileExample4 {
+    public static void main(String[] args) {
+        long startTime = System.currentTimeMillis();
+        Path source = Paths.get("media/Test.wav");
+        Path dest = Paths.get("media/TestCopy4.wav");
+        try {
+            Files.copy(source, dest);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.println("Файл скопирован");
+        long endTime = System.currentTimeMillis();
+        System.out.println("Время затрачено: " + (endTime - startTime) + " milliseconds");
+    }
+}
+
+------------------------------
+
+.\src\FileRider.java
+------------------------------
+/*
+    Задание 1
+    Есть файл test.txt, содержащий несколько строк текста. 
+    С помощью пакета java.nio нужно прочитать содержимое файла и вывести данные в стандартный поток вывода.
+ */
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+
+public class FileRider {
+    public static void main(String[] args) {
+
+        Path path = Paths.get("src\\test.txt");
+        try {
+            List<String> lines = Files.readAllLines(path);
+            for (String line : lines) {
+                System.out.println(line);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+------------------------------
+
+.\src\WatchServiceExample.java
+------------------------------
+/*
+ * Задание 4
+ * Сервис по мониторингу директории
+ * 
+ */
+
+
+import java.io.IOException;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class WatchServiceExample {
+    public static void main(String[] args) throws IOException, InterruptedException {
+        Path dir = Paths.get("media");
+        WatchService watchService = FileSystems.getDefault().newWatchService();
+        Map<WatchKey, Path> keyMap = new HashMap<>();
+        dir.register(watchService, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY);
+
+        while (true) {
+            WatchKey key = watchService.take();
+            Path dirPath = keyMap.get(key);
+            if (dirPath == null) {
+                dirPath = (Path) key.watchable();
+                keyMap.put(key, dirPath);
+            }
+            List<WatchEvent<?>> eventList = key.pollEvents();
+            for (WatchEvent<?> event : eventList) {
+                WatchEvent.Kind<?> kind = event.kind();
+                Path filePath = (Path) event.context();
+                Path absPath = dirPath.resolve(filePath);
+                if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
+                    System.out.println("New file created: " + filePath);
+                } else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
+                    if (Files.exists(absPath)) {
+                        BasicFileAttributes attr = Files.readAttributes(absPath, BasicFileAttributes.class);
+                        System.out.println("Size: " + attr.size());
+                    } else {
+                        System.out.println("File not found: " + filePath);
+                    }
+                } else if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
+                    System.out.println("File modified: " + filePath);
+                    // TODO: вывод списка изменений
+                }
+            }
+            key.reset();
+        }
+    }
+}
+
+------------------------------
